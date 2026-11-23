@@ -122,9 +122,9 @@ CORP_IF=$(route_if $(echo "$CORP_CIDR" | cut -d'/' -f1))
 [[ -n "$PUB_IF" ]] && OK "Default route interface: $PUB_IF" || BAD "Cannot determine default route interface"
 [[ -n "$CORP_IF" ]] && OK "Corp route interface for $CORP_CIDR: $CORP_IF" || BAD "No route to $CORP_CIDR (split-tunnel?)"
 if [[ -n "$PUB_IF" && -n "$CORP_IF" && "$PUB_IF" == "$CORP_IF" ]]; then
-  INFO "Public and corp traffic share interface ($PUB_IF) — likely full-tunnel"
+  INFO "Public and corp traffic share interface ($PUB_IF), likely full-tunnel"
 else
-  INFO "Interfaces differ (pub=$PUB_IF, corp=$CORP_IF) — likely split-tunnel"
+  INFO "Interfaces differ (pub=$PUB_IF, corp=$CORP_IF), likely split-tunnel"
 fi
 
 # 5) MTU sanity
