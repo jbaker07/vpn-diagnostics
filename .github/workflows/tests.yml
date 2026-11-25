@@ -1,0 +1,22 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests as root, which adds the low MTU namespace lab
+        run: sudo ./tests/run_tests.sh
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests, with the loopback MTU set to 1300 through passwordless sudo for the low MTU check
+        env:
+          VPN_DIAG_LO0_TEST: "1"
+        run: ./tests/run_tests.sh

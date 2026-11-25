@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#Stand in for ping, used by tests/run_tests.sh through PATH. It acts like a path whose
+#smallest link has an MTU of FAKE_PATH_MTU (1300 by default). A ping with the
+#don't-fragment bit set (-D on macOS, -M do on Linux) whose packet would be bigger than
+#that fails the way the real ping fails when the kernel refuses to send it. Every other
+#ping goes to the real ping in REAL_PING. Each call is appended to FAKE_PING_LOG, so the
+#test can check which options were used.
+REAL_PING="${REAL_PING:?set REAL_PING to the path of the real ping}"
+FAKE_PATH_MTU="${FAKE_PATH_MTU:-1300}"
+if [[ -n "${FAKE_PING_LOG:-}" ]]; then
+  echo "$*" >>"$FAKE_PING_LOG"
+fi
+
+PAYLOAD_SIZE=56
+DONT_FRAGMENT=0
+PREVIOUS_ARG=""
+for ARG in "$@"; do
+  [[ "$PREVIOUS_ARG" == "-s" ]] && PAYLOAD_SIZE="$ARG"
+  #-D means don't fragment only on macOS. On Linux it prints timestamps.
+  [[ "$(uname -s)" == Darwin && "$ARG" == "-D" ]] && DONT_FRAGMENT=1
+  [[ "$PREVIOUS_ARG" == "-M" && "$ARG" == "do" ]] && DONT_FRAGMENT=1
+  PREVIOUS_ARG="$ARG"
+done
+
+#28 bytes of IP and ICMP headers go on top of the payload
+if (( DONT_FRAGMENT == 1 && PAYLOAD_SIZE + 28 > FAKE_PATH_MTU )); then
+  echo "ping: sendto: Message too long" >&2
+  exit 2
+fi
+exec "$REAL_PING" "$@"
